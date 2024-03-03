@@ -12,7 +12,10 @@ lint:
 deploy_to_pypi:
   stage: deploy
   only:
-    - master
+    refs:
+      - master
+    changes:
+      - pyproject.toml
   before_script:
     - pip install poetry
     - poetry install --no-root
