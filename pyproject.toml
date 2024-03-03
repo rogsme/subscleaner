@@ -1,0 +1,72 @@
+[tool.poetry]
+name = "subscleaner"
+version = "0.1.0"
+description = "Remove advertisements from subtitle files"
+authors = ["Roger Gonzalez <roger@rogs.me>"]
+license = "GPL-3.0-or-later"
+# readme = "README.md"
+packages = [
+    { include = "subscleaner", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pysrt = "^1.1.2"
+chardet = "^5.2.0"
+
+[tool.poetry.group.dev.dependencies]
+python-lsp-server = "^1.10.0"
+python-lsp-ruff = "^2.2.0"
+pre-commit = "^3.6.2"
+
+[tool.poetry.scripts]
+subscleaner = "subscleaner.subscleaner:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "__init__.py"
+]
+
+line-length = 121
+indent-width = 4
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "PL", "B", "A", "C4", "TID", "ERA", "RET", "W", "C90", "ARG", "Q", "FLY", "SIM", "COM", "D"]
+ignore = ["E402", "PLW2901"]
+
+[tool.ruff.lint.pylint]
+max-args = 6
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
