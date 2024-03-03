@@ -10,6 +10,16 @@ Subscleaner is a Python script that removes advertisements from subtitle files. 
 
 ## Installation
 
+### Automatic installation
+
+To install with `pip`:
+
+``` sh
+sudo pip install subscleaner
+```
+
+### Manual installation
+
 To install Subscleaner, you'll need Python 3.9 or higher. It's recommended to use Poetry for managing the project dependencies.
 
 1. Clone the repository:
@@ -32,7 +42,13 @@ poetry install
 
 ## Usage
 
-To use Subscleaner, you can pipe a list of subtitle filenames into the script:
+If you installed the package automatically, you can pipe a list of subtitle filenames into the script:
+
+``` sh
+find /your/media/location -name "*.srt" | subscleaner
+```
+
+If you installed the package manually:
 
 ``` sh
 find /your/media/location -name "*.srt" | poetry run subscleaner
@@ -50,7 +66,7 @@ Contributions are welcome! If you have any suggestions or improvements, feel fre
 
 ## License
 
-Subscleaner is licensed under the GNU General Public License v3.0 or later. See the LICENSE file for more details.
+Subscleaner is licensed under the GNU General Public License v3.0 or later. See the [LICENSE](https://gitlab.com/rogs/subscleaner/-/blob/master/LICENSE) file for more details.
 
 ## Acknowledgments
 
