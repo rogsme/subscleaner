@@ -1,0 +1,20 @@
+image: python:latest
+
+lint:
+  stage: test
+  before_script:
+    - pip install poetry
+    - poetry install --no-root
+  script:
+    - poetry run ruff check ./src
+    - poetry run ruff format --check ./src
+
+deploy_to_pypi:
+  stage: deploy
+  only:
+    - master
+  before_script:
+    - pip install poetry
+    - poetry install --no-root
+  script:
+    - POETRY_PYPI_TOKEN_PYPI=$PYPI_PASSWORD poetry publish --build

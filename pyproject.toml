@@ -1,12 +1,21 @@
 [tool.poetry]
 name = "subscleaner"
-version = "0.1.0"
+version = "0.1.1"
 description = "Remove advertisements from subtitle files"
 authors = ["Roger Gonzalez <roger@rogs.me>"]
 license = "GPL-3.0-or-later"
-# readme = "README.md"
+readme = "README.md"
 packages = [
     { include = "subscleaner", from = "src" },
+]
+homepage = "https://gitlab.com/rogs/subscleaner/"
+repository = "https://gitlab.com/rogs/subscleaner/"
+documentation = "https://gitlab.com/rogs/subscleaner/-/blob/master/README.md"
+keywords = ["subtitles", "subs"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
 ]
 
 [tool.poetry.dependencies]
