@@ -22,6 +22,8 @@ classifiers = [
 python = "^3.9"
 pysrt = "^1.1.2"
 chardet = "^5.2.0"
+pytest = "^8.1.1"
+pytest-cov = "^4.1.0"
 
 [tool.poetry.group.dev.dependencies]
 python-lsp-server = "^1.10.0"
@@ -79,3 +81,8 @@ max-args = 6
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "."
+]
