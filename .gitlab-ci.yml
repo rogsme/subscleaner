@@ -36,3 +36,19 @@ deploy_to_pypi:
       - pyproject.toml
   script:
     - POETRY_PYPI_TOKEN_PYPI=$PYPI_PASSWORD poetry publish --build
+
+deploy_to_dockerhub:
+  stage: deploy
+  only:
+    refs:
+      - master
+    changes:
+      - Dockerfile
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
+    - docker buildx create --use
+  script:
+    - docker buildx build --push --tag roger/subscleaner:latest .
