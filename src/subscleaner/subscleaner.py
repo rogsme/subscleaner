@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """Main Subscleaner module."""
 
 """
@@ -84,7 +83,57 @@ def ads_in_line(line: str) -> bool:
     return any(re.match(ad, line, re.DOTALL) for ad in ADS)
 
 
-def process_file(filename):
+def is_already_processed(filename: str) -> bool:
+    """
+    Check if the file has already been processed.
+
+    Args:
+        filename (str): The path to the subtitle file.
+
+    Returns:
+        bool: True if the file has already been processed, False otherwise.
+    """
+    created = os.path.getctime(filename)
+    already_processed = time.mktime(
+        time.strptime("2021-05-13 00:00:00", "%Y-%m-%d %H:%M:%S"),
+    )
+    return created < already_processed
+
+
+def detect_encoding(filename: str) -> str:
+    """
+    Detect the encoding of the subtitle file.
+
+    Args:
+        filename (str): The path to the subtitle file.
+
+    Returns:
+        str: The detected encoding of the file.
+    """
+    with open(filename, "rb") as f:
+        return chardet.detect(f.read())["encoding"]
+
+
+def remove_ads(subs: pysrt.SubRipFile) -> bool:
+    """
+    Remove ads from the subtitle file.
+
+    Args:
+        subs (pysrt.SubRipFile): The subtitle file object.
+
+    Returns:
+        bool: True if the file was modified, False otherwise.
+    """
+    modified = False
+    for i, line in enumerate(subs):
+        if ads_in_line(line.text):
+            print(f"Removing: {line}\n")
+            del subs[i]
+            modified = True
+    return modified
+
+
+def process_file(filename: str) -> bool:
     """
     Process a subtitle file to remove ads.
 
@@ -95,28 +144,16 @@ def process_file(filename):
         bool: True if the file was modified, False otherwise.
     """
     try:
-        created = os.path.getctime(filename)
-        already_processed = time.mktime(
-            time.strptime("2021-05-13 00:00:00", "%Y-%m-%d %H:%M:%S"),
-        )
-        if created < already_processed:
+        if is_already_processed(filename):
             print(f"Already processed {filename}")
             return False
 
         print(f"Analyzing: {filename}")
 
-        with open(filename, "rb") as f:
-            encoding = chardet.detect(f.read())["encoding"]
-
+        encoding = detect_encoding(filename)
         subs = pysrt.open(filename, encoding=encoding)
-        modified = False
-        for i, line in enumerate(subs):
-            if ads_in_line(line.text):
-                print(f"Removing: {line}\n")
-                del subs[i]
-                modified = True
 
-        if modified:
+        if remove_ads(subs):
             print(f"Saving {filename}")
             subs.save(filename)
             return True
@@ -124,6 +161,23 @@ def process_file(filename):
     except Exception as e:
         print(f"Error processing {filename}: {e}")
         return False
+
+
+def process_files(filenames: list[str]) -> list[str]:
+    """
+    Process multiple subtitle files to remove ads.
+
+    Args:
+        filenames (list[str]): A list of subtitle file paths.
+
+    Returns:
+        list[str]: A list of modified file paths.
+    """
+    modified_files = []
+    for filename in filenames:
+        if process_file(filename):
+            modified_files.append(filename)
+    return modified_files
 
 
 def main():
@@ -134,13 +188,9 @@ def main():
     and print the result. Keep track of the modified files and print
     a summary at the end.
     """
-    modified_files = []
+    filenames = [filename.strip() for filename in sys.stdin]
     print("Starting script")
-    for filename in sys.stdin:
-        filename = filename.strip()
-        if process_file(filename):
-            modified_files.append(filename)
-
+    modified_files = process_files(filenames)
     if modified_files:
         print(f"Modified {len(modified_files)} files")
     print("Done")
