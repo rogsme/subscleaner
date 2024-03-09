@@ -4,6 +4,9 @@
   <img src="https://gitlab.com/uploads/-/system/project/avatar/55502917/logo.jpg" alt="subscleaner"/>
 </p>
 
+[![PyPI version](https://badge.fury.io/py/subscleaner.svg)](https://badge.fury.io/py/subscleaner)
+[![codecov](https://codecov.io/gl/rogs/subscleaner/graph/badge.svg?token=JDAY18ZIFZ)](https://codecov.io/gl/rogs/subscleaner)
+
 Subscleaner is a Python script that removes advertisements from subtitle files. It's designed to help you enjoy your favorite shows and movies without the distraction of unwanted ads in the subtitles.
 
 ## Features
