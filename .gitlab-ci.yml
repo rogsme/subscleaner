@@ -1,13 +1,31 @@
 image: python:latest
 
+stages:
+  - lint
+  - test
+  - deploy
+
+before_script:
+  - pip install poetry
+  - poetry install --no-root
+
 lint:
-  stage: test
-  before_script:
-    - pip install poetry
-    - poetry install --no-root
+  stage: lint
   script:
-    - poetry run ruff check ./src
-    - poetry run ruff format --check ./src
+    - poetry run ruff check
+    - poetry run ruff format --check
+
+test:
+  stage: test
+  script:
+    - poetry run pytest --cov=. --cov-report=xml
+  after_script:
+    - bash <(curl -s https://codecov.io/bash)
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
 
 deploy_to_pypi:
   stage: deploy
@@ -16,8 +34,5 @@ deploy_to_pypi:
       - master
     changes:
       - pyproject.toml
-  before_script:
-    - pip install poetry
-    - poetry install --no-root
   script:
     - POETRY_PYPI_TOKEN_PYPI=$PYPI_PASSWORD poetry publish --build
