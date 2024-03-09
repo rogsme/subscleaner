@@ -39,6 +39,8 @@ deploy_to_pypi:
 
 deploy_to_dockerhub:
   stage: deploy
+  needs:
+    - deploy_to_pypi
   only:
     refs:
       - master
@@ -51,4 +53,4 @@ deploy_to_dockerhub:
     - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
     - docker buildx create --use
   script:
-    - docker buildx build --push --tag roger/subscleaner:latest .
+    - docker buildx build --push --tag rogsme/subscleaner:latest .
