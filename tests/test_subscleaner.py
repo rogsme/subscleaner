@@ -7,13 +7,13 @@ import pysrt
 import pytest
 
 from src.subscleaner.subscleaner import (
-    ads_in_line,
-    detect_encoding,
-    is_already_processed,
+    contains_ad,
+    get_encoding,
+    is_processed_before,
     main,
-    process_file,
-    process_files,
-    remove_ads,
+    process_subtitle_file,
+    process_subtitle_files,
+    remove_ad_lines,
 )
 
 
@@ -42,118 +42,118 @@ def create_sample_srt_file(tmpdir, content):
 
 
 @pytest.mark.parametrize(
-    "line, expected",
+    "subtitle_line, expected_result",
     [
         ("This is a normal line", False),
         ("This line contains OpenSubtitles", True),
         ("Subtitles by XYZ", True),
     ],
 )
-def test_ads_in_line(line, expected):
+def test_contains_ad(subtitle_line, expected_result):
     """
-    Test the ads_in_line function with different input lines and expected results.
+    Test the contains_ad function with different subtitle lines and expected results.
 
     Args:
-        line (str): The input line to be tested.
-        expected (bool): The expected result (True if the line contains an ad, False otherwise).
+        subtitle_line (str): The subtitle line to be tested.
+        expected_result (bool): The expected result (True if the line contains an ad, False otherwise).
     """
-    assert ads_in_line(line) is expected
+    assert contains_ad(subtitle_line) is expected_result
 
 
-def test_is_already_processed(tmpdir):
+def test_is_processed_before(tmpdir):
     """
-    Test the is_already_processed function.
+    Test the is_processed_before function.
 
     Args:
         tmpdir (pytest.fixture): A temporary directory for creating the sample SRT file.
     """
-    file_path = create_sample_srt_file(tmpdir, "")
+    subtitle_file = create_sample_srt_file(tmpdir, "")
     with patch("src.subscleaner.subscleaner.os.path.getctime", return_value=0):
-        assert is_already_processed(file_path) is True
+        assert is_processed_before(subtitle_file) is True
 
     with patch("src.subscleaner.subscleaner.os.path.getctime", return_value=9999999999):
-        assert is_already_processed(file_path) is False
+        assert is_processed_before(subtitle_file) is False
 
 
-def test_detect_encoding(tmpdir, sample_srt_content):
+def test_get_encoding(tmpdir, sample_srt_content):
     """
-    Test the detect_encoding function.
+    Test the get_encoding function.
 
     Args:
         tmpdir (pytest.fixture): A temporary directory for creating the sample SRT file.
         sample_srt_content (str): The sample SRT content.
     """
-    file_path = create_sample_srt_file(tmpdir, sample_srt_content)
-    assert detect_encoding(file_path) == "ascii"
+    subtitle_file = create_sample_srt_file(tmpdir, sample_srt_content)
+    assert get_encoding(subtitle_file) == "ascii"
 
 
-def test_remove_ads(sample_srt_content):
+def test_remove_ad_lines(sample_srt_content):
     """
-    Test the remove_ads function.
+    Test the remove_ad_lines function.
 
     Args:
         sample_srt_content (str): The sample SRT content.
     """
-    subs = pysrt.from_string(sample_srt_content)
-    subs_expected_ammount = 2
-    assert remove_ads(subs) is True
-    assert len(subs) == subs_expected_ammount
+    subtitle_data = pysrt.from_string(sample_srt_content)
+    expected_subtitle_count = 2
+    assert remove_ad_lines(subtitle_data) is True
+    assert len(subtitle_data) == expected_subtitle_count
 
-    subs = pysrt.from_string("1\n00:00:01,000 --> 00:00:03,000\nThis is a sample subtitle.")
-    assert remove_ads(subs) is False
-    assert len(subs) == 1
+    subtitle_data = pysrt.from_string("1\n00:00:01,000 --> 00:00:03,000\nThis is a sample subtitle.")
+    assert remove_ad_lines(subtitle_data) is False
+    assert len(subtitle_data) == 1
 
 
-def test_process_file_no_modification(tmpdir, sample_srt_content):
+def test_process_subtitle_file_no_modification(tmpdir, sample_srt_content):
     """
-    Test the process_file function when the file does not require modification.
-
-    Args:
-        tmpdir (pytest.fixture): A temporary directory for creating the sample SRT file.
-        sample_srt_content (str): The sample SRT content.
-    """
-    file_path = create_sample_srt_file(tmpdir, sample_srt_content)
-    with patch("src.subscleaner.subscleaner.is_already_processed", return_value=True):
-        assert process_file(file_path) is False
-
-
-def test_process_file_with_modification(tmpdir, sample_srt_content):
-    """
-    Test the process_file function when the file requires modification.
+    Test the process_subtitle_file function when the file does not require modification.
 
     Args:
         tmpdir (pytest.fixture): A temporary directory for creating the sample SRT file.
         sample_srt_content (str): The sample SRT content.
     """
-    file_path = create_sample_srt_file(tmpdir, sample_srt_content)
-    with patch("src.subscleaner.subscleaner.is_already_processed", return_value=False):
-        assert process_file(file_path) is True
+    subtitle_file = create_sample_srt_file(tmpdir, sample_srt_content)
+    with patch("src.subscleaner.subscleaner.is_processed_before", return_value=True):
+        assert process_subtitle_file(subtitle_file) is False
 
 
-def test_process_file_error(tmpdir):
+def test_process_subtitle_file_with_modification(tmpdir, sample_srt_content):
     """
-    Test the process_file function when an error occurs (e.g., file not found).
+    Test the process_subtitle_file function when the file requires modification.
+
+    Args:
+        tmpdir (pytest.fixture): A temporary directory for creating the sample SRT file.
+        sample_srt_content (str): The sample SRT content.
+    """
+    subtitle_file = create_sample_srt_file(tmpdir, sample_srt_content)
+    with patch("src.subscleaner.subscleaner.is_processed_before", return_value=False):
+        assert process_subtitle_file(subtitle_file) is True
+
+
+def test_process_subtitle_file_error(tmpdir):
+    """
+    Test the process_subtitle_file function when an error occurs (e.g., file not found).
 
     Args:
         tmpdir (pytest.fixture): A temporary directory.
     """
-    file_path = tmpdir.join("nonexistent.srt")
-    assert process_file(str(file_path)) is False
+    subtitle_file = tmpdir.join("nonexistent.srt")
+    assert process_subtitle_file(str(subtitle_file)) is False
 
 
-def test_process_files(tmpdir, sample_srt_content):
+def test_process_subtitle_files(tmpdir, sample_srt_content):
     """
-    Test the process_files function.
+    Test the process_subtitle_files function.
 
     Args:
         tmpdir (pytest.fixture): A temporary directory for creating the sample SRT files.
         sample_srt_content (str): The sample SRT content.
     """
-    file_path1 = create_sample_srt_file(tmpdir, sample_srt_content)
-    file_path2 = create_sample_srt_file(tmpdir, "1\n00:00:01,000 --> 00:00:03,000\nThis is a sample subtitle.")
-    with patch("src.subscleaner.subscleaner.process_file", side_effect=[True, False]):
-        modified_files = process_files([file_path1, file_path2])
-        assert modified_files == [file_path1]
+    subtitle_file1 = create_sample_srt_file(tmpdir, sample_srt_content)
+    subtitle_file2 = create_sample_srt_file(tmpdir, "1\n00:00:01,000 --> 00:00:03,000\nThis is a sample subtitle.")
+    with patch("src.subscleaner.subscleaner.process_subtitle_file", side_effect=[True, False]):
+        modified_subtitle_files = process_subtitle_files([subtitle_file1, subtitle_file2])
+        assert modified_subtitle_files == [subtitle_file1]
 
 
 def test_main_no_modification(tmpdir, sample_srt_content):
@@ -164,13 +164,13 @@ def test_main_no_modification(tmpdir, sample_srt_content):
         tmpdir (pytest.fixture): A temporary directory for creating the sample SRT file.
         sample_srt_content (str): The sample SRT content.
     """
-    file_path = create_sample_srt_file(tmpdir, sample_srt_content)
+    subtitle_file = create_sample_srt_file(tmpdir, sample_srt_content)
     with (
-        patch("sys.stdin", StringIO(file_path)),
-        patch("src.subscleaner.subscleaner.process_files", return_value=[]) as mock_process_files,
+        patch("sys.stdin", StringIO(subtitle_file)),
+        patch("src.subscleaner.subscleaner.process_subtitle_files", return_value=[]) as mock_process_subtitle_files,
     ):
         main()
-        mock_process_files.assert_called_once_with([file_path])
+        mock_process_subtitle_files.assert_called_once_with([subtitle_file])
 
 
 def test_main_with_modification(tmpdir, sample_srt_content):
@@ -181,10 +181,13 @@ def test_main_with_modification(tmpdir, sample_srt_content):
         tmpdir (pytest.fixture): A temporary directory for creating the sample SRT file.
         sample_srt_content (str): The sample SRT content.
     """
-    file_path = create_sample_srt_file(tmpdir, sample_srt_content)
+    subtitle_file = create_sample_srt_file(tmpdir, sample_srt_content)
     with (
-        patch("sys.stdin", StringIO(file_path)),
-        patch("src.subscleaner.subscleaner.process_files", return_value=[file_path]) as mock_process_files,
+        patch("sys.stdin", StringIO(subtitle_file)),
+        patch(
+            "src.subscleaner.subscleaner.process_subtitle_files",
+            return_value=[subtitle_file],
+        ) as mock_process_subtitle_files,
     ):
         main()
-        mock_process_files.assert_called_once_with([file_path])
+        mock_process_subtitle_files.assert_called_once_with([subtitle_file])
