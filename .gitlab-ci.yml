@@ -34,6 +34,8 @@ deploy_to_pypi:
       - master
     changes:
       - pyproject.toml
+  except:
+    - tags
   script:
     - POETRY_PYPI_TOKEN_PYPI=$PYPI_PASSWORD poetry publish --build
 
@@ -47,6 +49,8 @@ deploy_to_dockerhub:
     changes:
       - pyproject.toml
       - Dockerfile
+  except:
+    - tags
   image: docker:latest
   services:
     - docker:dind
