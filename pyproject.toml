@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "subscleaner"
-version = "0.1.4"
+version = "0.1.5"
 description = "Remove advertisements from subtitle files"
 authors = ["Roger Gonzalez <roger@rogs.me>"]
 license = "GPL-3.0-or-later"
@@ -22,13 +22,13 @@ classifiers = [
 python = "^3.9"
 pysrt = "^1.1.2"
 chardet = "^5.2.0"
-pytest = "^8.1.1"
-pytest-cov = "^4.1.0"
 
 [tool.poetry.group.dev.dependencies]
 python-lsp-server = "^1.10.0"
 python-lsp-ruff = "^2.2.0"
 pre-commit = "^3.6.2"
+pytest = "^8.1.1"
+pytest-cov = "^4.1.0"
 
 [tool.poetry.scripts]
 subscleaner = "subscleaner.subscleaner:main"
