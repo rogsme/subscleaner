@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "subscleaner"
-version = "0.2.0"
+version = "1.0.0"
 description = "Remove advertisements from subtitle files"
 authors = ["Roger Gonzalez <roger@rogs.me>"]
 license = "GPL-3.0-or-later"
