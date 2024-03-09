@@ -45,6 +45,7 @@ deploy_to_dockerhub:
     refs:
       - master
     changes:
+      - pyproject.toml
       - Dockerfile
   image: docker:latest
   services:
