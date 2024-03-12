@@ -63,8 +63,12 @@ AD_PATTERNS = [
     re.compile(r"\bUna\s+traducci[óo]n\s+de\b", re.IGNORECASE),
     re.compile(r"\btvsubtitles\b", re.IGNORECASE),
     re.compile(r"\bTacho8\b", re.IGNORECASE),
-    re.compile(r"\bwww\.\S+\.com\b", re.IGNORECASE),
-    re.compile(r"\bwww\.\S+\.es\b", re.IGNORECASE),
+    re.compile(r"\b(www\.)?\S+\.(com|es|link|app|ly)\b", re.IGNORECASE),
+    re.compile(r"to remove all ads from", re.IGNORECASE),
+    re.compile(r"\bfrom 3.49 USD/month ---->\b", re.IGNORECASE),
+    re.compile(r"implement REST API from", re.IGNORECASE),
+    re.compile(r"Signup Here ->", re.IGNORECASE),
+    re.compile(r"Help other users to choose the best subtitles", re.IGNORECASE),
 ]
 
 
