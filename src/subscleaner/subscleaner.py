@@ -88,6 +88,7 @@ AD_PATTERNS = [
     re.compile(r"\bto get subtitles ->\b", re.IGNORECASE),
     re.compile(r"\bHelp other users to choose the best subtitles\b", re.IGNORECASE),
     re.compile(r"\bwith Subtitles for Free\b", re.IGNORECASE),
+    re.compile(r"\bRARBG\b", re.IGNORECASE),
 ]
 
 
