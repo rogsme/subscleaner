@@ -89,10 +89,10 @@ AD_PATTERNS = [
     re.compile(r"\bHelp other users to choose the best subtitles\b", re.IGNORECASE),
     re.compile(r"\bwith Subtitles for Free\b", re.IGNORECASE),
     re.compile(r"\bRARBG\b", re.IGNORECASE),
-    re.compile(r"\SerieCanal\.com\b", re.IGNORECASE),
-    re.compile(r"\Nest0r\b", re.IGNORECASE),
-    re.compile(r"\ikerslot\b", re.IGNORECASE),
-    re.compile(r"\menoyos\b", re.IGNORECASE),
+    re.compile(r"\bSerieCanal\.com\b", re.IGNORECASE),
+    re.compile(r"\bNest0r\b", re.IGNORECASE),
+    re.compile(r"\bikerslot\b", re.IGNORECASE),
+    re.compile(r"\bmenoyos\b", re.IGNORECASE),
 ]
 
 
