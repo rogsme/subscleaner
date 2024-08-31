@@ -47,6 +47,7 @@ def create_sample_srt_file(tmpdir, content):
         ("This is a normal line", False),
         ("This line contains OpenSubtitles", True),
         ("Subtitles by XYZ", True),
+        ("YTS.MX presents", True),
     ],
 )
 def test_contains_ad(subtitle_line, expected_result):

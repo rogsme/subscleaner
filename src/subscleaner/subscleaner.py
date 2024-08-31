@@ -93,6 +93,7 @@ AD_PATTERNS = [
     re.compile(r"\bNest0r\b", re.IGNORECASE),
     re.compile(r"\bikerslot\b", re.IGNORECASE),
     re.compile(r"\bmenoyos\b", re.IGNORECASE),
+    re.compile(r"\bYTS.MX\b", re.IGNORECASE),
 ]
 
 
