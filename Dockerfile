@@ -1,8 +1,18 @@
 FROM python:alpine
 
-RUN apk update && apk add --no-cache curl gcc g++ make libxml2-dev libxslt-dev tzdata && \
-    pip install --no-cache-dir subscleaner
+RUN apk add --no-cache curl
 
-RUN echo -e "SHELL=/bin/sh\nPATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n\n" > /etc/crontabs/root
+ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.33/supercronic-linux-amd64 \
+    SUPERCRONIC_SHA1SUM=71b0d58cc53f6bd72cf2f293e09e294b79c666d8 \
+    SUPERCRONIC=supercronic-linux-amd64
 
-CMD echo "$CRON find /files -name \"*.srt\" | $(which subscleaner)" >> /etc/crontabs/root && crond -f
+RUN curl -fsSLO "$SUPERCRONIC_URL" \
+ && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
+ && chmod +x "$SUPERCRONIC" \
+ && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
+ && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic
+
+RUN pip install --no-cache-dir subscleaner
+
+CMD echo "${CRON:-0 0 * * *} find /files -name \"*.srt\" | $(which subscleaner)" > /crontab && \
+    /usr/local/bin/supercronic /crontab
