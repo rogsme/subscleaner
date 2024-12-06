@@ -1,7 +1,7 @@
 exclude: ^(.bzr|\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.pants\.d|\.svn|\.tox|\.venv|_build|buck-out|build|dist|node_modules|venv|\.idea|dockerdata|static|.*\b(migrations)\b.*)
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.3.0
+  rev: v0.8.2
   hooks:
     - id: ruff
       args: [--fix]

@@ -24,11 +24,11 @@ pysrt = "^1.1.2"
 chardet = "^5.2.0"
 
 [tool.poetry.group.dev.dependencies]
-python-lsp-server = "^1.10.0"
-python-lsp-ruff = "^2.2.0"
-pre-commit = "^3.6.2"
-pytest = "^8.1.1"
-pytest-cov = "^4.1.0"
+python-lsp-server = "^1.12.0"
+python-lsp-ruff = "^2.2.2"
+pre-commit = "^4.0.1"
+pytest = "^8.3.4"
+pytest-cov = "^6.0.0"
 
 [tool.poetry.scripts]
 subscleaner = "subscleaner.subscleaner:main"
