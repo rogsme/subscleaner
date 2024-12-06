@@ -46,9 +46,6 @@ deploy_to_dockerhub:
   only:
     refs:
       - master
-    changes:
-      - pyproject.toml
-      - Dockerfile
   except:
     - tags
   image: docker:latest
@@ -59,3 +56,21 @@ deploy_to_dockerhub:
     - docker buildx create --use
   script:
     - docker buildx build --push --tag rogsme/subscleaner:latest .
+
+deploy_to_gitlab:
+  stage: deploy
+  needs:
+    - deploy_to_pypi
+  only:
+    refs:
+      - master
+  except:
+    - tags
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login registry.gitlab.com -u $GITLAB_USERNAME -p $GITLAB_PASSWORD
+    - docker buildx create --use
+  script:
+    - docker buildx build --push --tag registry.gitlab.com/rogs/subscleaner:latest .
