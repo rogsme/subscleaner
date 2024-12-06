@@ -82,7 +82,7 @@ find /your/media/location -name "*.srt" | python3 subscleaner.py
 To use the Docker image, you can run the container with the following command:
 
 ``` sh
-docker run -e CRON="0 0 * * *" -v /your/media/location:/files rogsme/subscleaner
+docker run -e CRON="0 0 * * *" -v /your/media/location:/files -v /etc/localtime:/etc/localtime:ro rogsme/subscleaner
 ```
 
 - Replace `0 0 * * *` with your desired cron schedule for running the script.
@@ -103,6 +103,7 @@ Add this container to your `docker-compose.custom.yaml`:
       - CRON=0 0 * * *
     volumes:
       - ${MEDIA_DIRECTORY}:/files
+      - /etc/localtime:/etc/localtime:ro
 ```
 
 To get more information on how to add your own containers in YAMS: https://yams.media/advanced/add-your-own-containers/
