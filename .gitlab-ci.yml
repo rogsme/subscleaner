@@ -42,7 +42,8 @@ deploy_to_pypi:
 deploy_to_dockerhub:
   stage: deploy
   needs:
-    - deploy_to_pypi
+    - job: deploy_to_pypi
+      optional: true
   only:
     refs:
       - master
@@ -63,7 +64,8 @@ deploy_to_dockerhub:
 deploy_to_gitlab:
   stage: deploy
   needs:
-    - deploy_to_pypi
+    - job: deploy_to_pypi
+      optional: true
   only:
     refs:
       - master
