@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
+import pathlib
 import re
 import sys
 import time
@@ -110,35 +111,43 @@ def contains_ad(subtitle_line: str) -> bool:
     return any(pattern.search(subtitle_line) for pattern in AD_PATTERNS)
 
 
-def is_processed_before(subtitle_file: str) -> bool:
+def is_processed_before(subtitle_file: pathlib.Path) -> bool:
     """
     Check if the subtitle file has already been processed.
 
     Args:
-        subtitle_file (str): The path to the subtitle file.
+        subtitle_file (pathlib.Path): The path to the subtitle file.
 
     Returns:
         bool: True if the subtitle file has already been processed, False otherwise.
     """
-    file_creation_time = os.path.getctime(subtitle_file)
-    processed_timestamp = time.mktime(
-        time.strptime("2021-05-13 00:00:00", "%Y-%m-%d %H:%M:%S"),
-    )
-    return file_creation_time < processed_timestamp
+    try:
+        file_creation_time = os.path.getctime(subtitle_file)
+        processed_timestamp = time.mktime(
+            time.strptime("2021-05-13 00:00:00", "%Y-%m-%d %H:%M:%S"),
+        )
+        return file_creation_time < processed_timestamp
+    except Exception as e:
+        print(f"Error checking if file was processed before: {e}")
+        return False
 
 
-def get_encoding(subtitle_file: str) -> str:
+def get_encoding(subtitle_file: pathlib.Path) -> str:
     """
     Detect the encoding of the subtitle file.
 
     Args:
-        subtitle_file (str): The path to the subtitle file.
+        subtitle_file (pathlib.Path): The path to the subtitle file.
 
     Returns:
         str: The detected encoding of the subtitle file.
     """
-    with open(subtitle_file, "rb") as file:
-        return chardet.detect(file.read())["encoding"]
+    try:
+        with open(subtitle_file, "rb") as file:
+            return chardet.detect(file.read())["encoding"] or "utf-8"
+    except Exception as e:
+        print(f"Error detecting encoding: {e}")
+        return "utf-8"
 
 
 def remove_ad_lines(subtitle_data: pysrt.SubRipFile) -> bool:
@@ -152,33 +161,52 @@ def remove_ad_lines(subtitle_data: pysrt.SubRipFile) -> bool:
         bool: True if the subtitle data was modified, False otherwise.
     """
     modified = False
+    indices_to_remove = []
+
     for index, subtitle in enumerate(subtitle_data):
         if contains_ad(subtitle.text):
             print(f"Removing: {subtitle}\n")
-            del subtitle_data[index]
+            indices_to_remove.append(index)
             modified = True
+
+    for index in sorted(indices_to_remove, reverse=True):
+        del subtitle_data[index]
+
     return modified
 
 
-def process_subtitle_file(subtitle_file: str) -> bool:
+def process_subtitle_file(subtitle_file_path: str) -> bool:
     """
     Process a subtitle file to remove ad lines.
 
     Args:
-        subtitle_file (str): The path to the subtitle file.
+        subtitle_file_path (str): The path to the subtitle file.
 
     Returns:
         bool: True if the subtitle file was modified, False otherwise.
     """
     try:
+        subtitle_file = pathlib.Path(subtitle_file_path)
+
+        print(f"Analyzing: {subtitle_file}")
+
+        if not subtitle_file.exists():
+            print(f"File not found: {subtitle_file}")
+            return False
+
         if is_processed_before(subtitle_file):
             print(f"Already processed {subtitle_file}")
             return False
 
-        print(f"Analyzing: {subtitle_file}")
-
         encoding = get_encoding(subtitle_file)
-        subtitle_data = pysrt.open(subtitle_file, encoding=encoding)
+        try:
+            subtitle_data = pysrt.open(subtitle_file, encoding=encoding)
+        except UnicodeDecodeError:
+            print(f"Failed to open with detected encoding {encoding}, trying utf-8")
+            subtitle_data = pysrt.open(subtitle_file, encoding="utf-8")
+        except Exception as e:
+            print(f"Error opening subtitle file with pysrt: {e}")
+            return False
 
         if remove_ad_lines(subtitle_data):
             print(f"Saving {subtitle_file}")
@@ -186,7 +214,7 @@ def process_subtitle_file(subtitle_file: str) -> bool:
             return True
         return False
     except Exception as e:
-        print(f"Error processing {subtitle_file}: {e}")
+        print(f"Error processing {subtitle_file_path}: {e}")
         return False
 
 
