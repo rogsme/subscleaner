@@ -1,7 +1,6 @@
 """Unit tests for the subscleaner module."""
 
 import os
-import sys
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch

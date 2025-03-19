@@ -19,10 +19,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
+import pathlib
 import re
 import sys
 import time
-import pathlib
 
 import chardet
 import pysrt
