@@ -9,3 +9,5 @@ build
 htmlcov
 dist
 .coverage
+.aider*
+coverage.*
