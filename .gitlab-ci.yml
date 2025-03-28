@@ -6,19 +6,19 @@ stages:
   - deploy
 
 before_script:
-  - pip install poetry
-  - poetry install --no-root
+  - pip install uv
+  - uv sync
 
 lint:
   stage: lint
   script:
-    - poetry run ruff check
-    - poetry run ruff format --check
+    - uv run ruff check
+    - uv run ruff format --check
 
 test:
   stage: test
   script:
-    - poetry run pytest -v --cov=. --cov-report=xml
+    - uv run pytest -v --cov=. --cov-report=xml
   after_script:
     - bash <(curl -s https://codecov.io/bash)
   artifacts:
@@ -37,7 +37,9 @@ deploy_to_pypi:
   except:
     - tags
   script:
-    - POETRY_PYPI_TOKEN_PYPI=$PYPI_PASSWORD poetry publish --build
+    - uv add build twine
+    - uv run python -m build
+    - TWINE_USERNAME=__token__ TWINE_PASSWORD=$PYPI_PASSWORD uv run python -m twine upload dist/*
 
 deploy_to_dockerhub:
   stage: deploy
