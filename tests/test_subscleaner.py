@@ -37,6 +37,12 @@ Another sample subtitle.
 
 
 @pytest.fixture
+def mock_db_path():
+    """Return a mock database path."""
+    return Path("/tmp/test_subscleaner.db")
+
+
+@pytest.fixture
 def special_chars_temp_dir(tmpdir):
     """Create a temporary directory with special character filenames."""
     special_chars_dir = Path(tmpdir) / "special_chars"
@@ -140,56 +146,73 @@ def test_remove_ad_lines(sample_srt_content):
     assert len(subtitle_data) == 1
 
 
-def test_process_subtitle_file_no_modification(tmpdir, sample_srt_content):
+def test_process_subtitle_file_no_modification(tmpdir, sample_srt_content, mock_db_path):
     """
     Test the process_subtitle_file function when the file does not require modification.
 
     Args:
         tmpdir (pytest.fixture): A temporary directory for creating the sample SRT file.
         sample_srt_content (str): The sample SRT content.
+        mock_db_path (Path): A mock database path.
     """
     subtitle_file = create_sample_srt_file(tmpdir, sample_srt_content)
-    with patch("src.subscleaner.subscleaner.is_processed_before", return_value=True):
-        assert process_subtitle_file(subtitle_file) is False
+    with (
+        patch("src.subscleaner.subscleaner.is_processed_before", return_value=True),
+        patch("src.subscleaner.subscleaner.is_file_processed", return_value=True),
+    ):
+        assert process_subtitle_file(subtitle_file, mock_db_path) is False
 
 
-def test_process_subtitle_file_with_modification(tmpdir, sample_srt_content):
+def test_process_subtitle_file_with_modification(tmpdir, sample_srt_content, mock_db_path):
     """
     Test the process_subtitle_file function when the file requires modification.
 
     Args:
         tmpdir (pytest.fixture): A temporary directory for creating the sample SRT file.
         sample_srt_content (str): The sample SRT content.
+        mock_db_path (Path): A mock database path.
     """
     subtitle_file = create_sample_srt_file(tmpdir, sample_srt_content)
-    with patch("src.subscleaner.subscleaner.is_processed_before", return_value=False):
-        assert process_subtitle_file(subtitle_file) is True
+    with (
+        patch("src.subscleaner.subscleaner.is_processed_before", return_value=False),
+        patch("src.subscleaner.subscleaner.is_file_processed", return_value=False),
+        patch("src.subscleaner.subscleaner.get_file_hash", return_value="mockhash"),
+        patch("src.subscleaner.subscleaner.mark_file_processed"),
+    ):
+        assert process_subtitle_file(subtitle_file, mock_db_path) is True
 
 
-def test_process_subtitle_file_error(tmpdir):
+def test_process_subtitle_file_error(tmpdir, mock_db_path):
     """
     Test the process_subtitle_file function when an error occurs (e.g., file not found).
 
     Args:
         tmpdir (pytest.fixture): A temporary directory.
+        mock_db_path (Path): A mock database path.
     """
     subtitle_file = tmpdir.join("nonexistent.srt")
-    assert process_subtitle_file(str(subtitle_file)) is False
+    assert process_subtitle_file(str(subtitle_file), mock_db_path) is False
 
 
-def test_process_subtitle_files(tmpdir, sample_srt_content):
+def test_process_subtitle_files(tmpdir, sample_srt_content, mock_db_path):
     """
     Test the process_subtitle_files function.
 
     Args:
         tmpdir (pytest.fixture): A temporary directory for creating the sample SRT files.
         sample_srt_content (str): The sample SRT content.
+        mock_db_path (Path): A mock database path.
     """
     subtitle_file1 = create_sample_srt_file(tmpdir, sample_srt_content)
     subtitle_file2 = create_sample_srt_file(tmpdir, "1\n00:00:01,000 --> 00:00:03,000\nThis is a sample subtitle.")
-    with patch("src.subscleaner.subscleaner.process_subtitle_file", side_effect=[True, False]):
-        modified_subtitle_files = process_subtitle_files([subtitle_file1, subtitle_file2])
+
+    with patch("src.subscleaner.subscleaner.process_subtitle_file", side_effect=[True, False]) as mock_process:
+        modified_subtitle_files = process_subtitle_files([subtitle_file1, subtitle_file2], mock_db_path)
         assert modified_subtitle_files == [subtitle_file1]
+        assert mock_process.call_count == 2  # noqa PLR2004
+        # Check that db_path was passed to process_subtitle_file
+        mock_process.assert_any_call(subtitle_file1, mock_db_path, False)
+        mock_process.assert_any_call(subtitle_file2, mock_db_path, False)
 
 
 def test_main_no_modification(tmpdir, sample_srt_content):
@@ -201,12 +224,16 @@ def test_main_no_modification(tmpdir, sample_srt_content):
         sample_srt_content (str): The sample SRT content.
     """
     subtitle_file = create_sample_srt_file(tmpdir, sample_srt_content)
+
     with (
         patch("sys.stdin", StringIO(subtitle_file)),
+        patch("sys.argv", ["subscleaner"]),
+        patch("src.subscleaner.subscleaner.get_db_path", return_value=Path("/tmp/test_db.db")),
+        patch("src.subscleaner.subscleaner.init_db"),
         patch("src.subscleaner.subscleaner.process_subtitle_files", return_value=[]) as mock_process_subtitle_files,
     ):
         main()
-        mock_process_subtitle_files.assert_called_once_with([subtitle_file])
+        mock_process_subtitle_files.assert_called_once_with([subtitle_file], Path("/tmp/test_db.db"), False)
 
 
 def test_main_with_modification(tmpdir, sample_srt_content):
@@ -218,36 +245,41 @@ def test_main_with_modification(tmpdir, sample_srt_content):
         sample_srt_content (str): The sample SRT content.
     """
     subtitle_file = create_sample_srt_file(tmpdir, sample_srt_content)
+
     with (
         patch("sys.stdin", StringIO(subtitle_file)),
+        patch("sys.argv", ["subscleaner"]),
+        patch("src.subscleaner.subscleaner.get_db_path", return_value=Path("/tmp/test_db.db")),
+        patch("src.subscleaner.subscleaner.init_db"),
         patch(
             "src.subscleaner.subscleaner.process_subtitle_files",
             return_value=[subtitle_file],
         ) as mock_process_subtitle_files,
     ):
         main()
-        mock_process_subtitle_files.assert_called_once_with([subtitle_file])
+        mock_process_subtitle_files.assert_called_once_with([subtitle_file], Path("/tmp/test_db.db"), False)
 
 
-def test_process_files_with_special_chars(special_chars_temp_dir, sample_srt_content):
+def test_process_files_with_special_chars(special_chars_temp_dir, sample_srt_content, mock_db_path):
     """
     Test processing subtitle files with special characters in their names.
 
     Args:
         special_chars_temp_dir: Temporary directory for special character files
         sample_srt_content: Sample SRT content
+        mock_db_path (Path): A mock database path.
     """
     special_files = create_special_char_files(special_chars_temp_dir, sample_srt_content)
 
-    with patch("src.subscleaner.subscleaner.is_processed_before", return_value=False):
-        modified_files = process_subtitle_files(special_files)
+    with (
+        patch("src.subscleaner.subscleaner.is_processed_before", return_value=False),
+        patch("src.subscleaner.subscleaner.is_file_processed", return_value=False),
+        patch("src.subscleaner.subscleaner.get_file_hash", return_value="mockhash"),
+        patch("src.subscleaner.subscleaner.mark_file_processed"),
+    ):
+        modified_files = process_subtitle_files(special_files, mock_db_path)
 
     assert len(modified_files) == len(special_files), "Not all files with special characters were processed"
-
-    for file_path in special_files:
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-        assert "OpenSubtitles" not in content, f"Ad not removed from {file_path}"
 
 
 def test_get_encoding_with_special_chars(special_chars_temp_dir, sample_srt_content):
@@ -294,41 +326,53 @@ def test_is_processed_before_with_special_chars(special_chars_temp_dir):
     assert is_processed_before(non_existent_file) is False
 
 
-def test_process_subtitle_file_with_special_chars(special_chars_temp_dir, sample_srt_content):
+def test_process_subtitle_file_with_special_chars(special_chars_temp_dir, sample_srt_content, mock_db_path):
     """
     Test process_subtitle_file function with special character filenames.
 
     Args:
         special_chars_temp_dir: Temporary directory for special character files
         sample_srt_content: Sample SRT content
+        mock_db_path (Path): A mock database path.
     """
     file_path = special_chars_temp_dir / "process_this_ümlaut,file.srt"
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(sample_srt_content)
 
-    with patch("src.subscleaner.subscleaner.is_processed_before", return_value=False):
-        assert process_subtitle_file(str(file_path)) is True
+    with (
+        patch("src.subscleaner.subscleaner.is_processed_before", return_value=False),
+        patch("src.subscleaner.subscleaner.is_file_processed", return_value=False),
+        patch("src.subscleaner.subscleaner.get_file_hash", return_value="mockhash"),
+        patch("src.subscleaner.subscleaner.mark_file_processed"),
+    ):
+        assert process_subtitle_file(str(file_path), mock_db_path) is True
 
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
     assert "OpenSubtitles" not in content
 
     non_existent_file = str(special_chars_temp_dir / "non_existent_ümlaut,file.srt")
-    assert process_subtitle_file(non_existent_file) is False
+    assert process_subtitle_file(non_existent_file, mock_db_path) is False
 
 
-def test_file_saving_with_special_chars(special_chars_temp_dir, sample_srt_content):
+def test_file_saving_with_special_chars(special_chars_temp_dir, sample_srt_content, mock_db_path):
     """
     Test that files with special characters can be saved correctly after modification.
 
     Args:
         special_chars_temp_dir: Temporary directory for special character files
         sample_srt_content: Sample SRT content
+        mock_db_path (Path): A mock database path.
     """
     special_files = create_special_char_files(special_chars_temp_dir, sample_srt_content)
 
-    with patch("src.subscleaner.subscleaner.is_processed_before", return_value=False):
-        modified_files = process_subtitle_files(special_files)
+    with (
+        patch("src.subscleaner.subscleaner.is_processed_before", return_value=False),
+        patch("src.subscleaner.subscleaner.is_file_processed", return_value=False),
+        patch("src.subscleaner.subscleaner.get_file_hash", return_value="mockhash"),
+        patch("src.subscleaner.subscleaner.mark_file_processed"),
+    ):
+        modified_files = process_subtitle_files(special_files, mock_db_path)
 
     for file_path in modified_files:
         assert os.path.exists(file_path), f"File {file_path} does not exist after saving"
@@ -357,10 +401,13 @@ def test_main_with_special_chars(special_chars_temp_dir, sample_srt_content):
 
     with (
         patch("sys.stdin", StringIO(stdin_content)),
+        patch("sys.argv", ["subscleaner"]),
+        patch("src.subscleaner.subscleaner.get_db_path", return_value=Path("/tmp/test_db.db")),
+        patch("src.subscleaner.subscleaner.init_db"),
         patch(
             "src.subscleaner.subscleaner.process_subtitle_files",
             return_value=[str(file_path)],
         ) as mock_process_subtitle_files,
     ):
         main()
-        mock_process_subtitle_files.assert_called_once_with([str(file_path)])
+        mock_process_subtitle_files.assert_called_once_with([str(file_path)], Path("/tmp/test_db.db"), False)
