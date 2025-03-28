@@ -418,12 +418,55 @@ def main():
     parser = argparse.ArgumentParser(description="Remove advertisements from subtitle files.")
     parser.add_argument("--debug", action="store_true", help="Use current directory for database")
     parser.add_argument("--force", action="store_true", help="Process files even if they have been processed before")
+    parser.add_argument("--version", action="store_true", help="Show version information and exit")
+    parser.add_argument("--reset-db", action="store_true", help="Reset the database (remove all stored file hashes)")
+    parser.add_argument("--list-patterns", action="store_true", help="List all advertisement patterns being used")
     args = parser.parse_args()
 
+    # Handle version request
+    if args.version:
+        try:
+            from subscleaner import __version__
+
+            print(f"Subscleaner version {__version__}")
+        except ImportError:
+            import importlib.metadata
+
+            version = importlib.metadata.version("subscleaner")
+            print(f"Subscleaner version {version}")
+        return
+
+    # Get database path
     db_path = get_db_path(args.debug)
+
+    # Handle reset database request
+    if args.reset_db:
+        if db_path.exists():
+            try:
+                db_path.unlink()
+                print(f"Database reset successfully: {db_path}")
+            except Exception as e:
+                print(f"Error resetting database: {e}")
+        else:
+            print(f"No database found at {db_path}")
+        return
+
+    # Handle list patterns request
+    if args.list_patterns:
+        print("Advertisement patterns being used:")
+        for i, pattern in enumerate(AD_PATTERNS, 1):
+            print(f"{i}. {pattern.pattern}")
+        return
+
+    # Initialize database
     init_db(db_path)
 
+    # Process subtitle files
     subtitle_files = [file_path.strip() for file_path in sys.stdin]
+    if not subtitle_files:
+        print("No subtitle files provided. Pipe filenames to subscleaner or use --help for more information.")
+        return
+
     print("Starting script")
     modified_files = process_subtitle_files(subtitle_files, db_path, args.force)
     if modified_files:
