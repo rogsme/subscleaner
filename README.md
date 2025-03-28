@@ -121,3 +121,36 @@ Subscleaner is licensed under the GNU General Public License v3.0 or later. See 
 This repository is a rewrite of this Github repository: https://github.com/FraMecca/subscleaner.
 
 Thanks to [FraMecca](https://github.com/FraMecca/) in Github!
+
+## Database and Caching
+
+Subscleaner now uses a SQLite database to track processed files, which significantly improves performance by avoiding redundant processing of unchanged subtitle files.
+
+### How it works
+
+1. When Subscleaner processes a subtitle file, it generates an MD5 hash of the file content.
+2. This hash is stored in a SQLite database along with the file path.
+3. On subsequent runs, Subscleaner checks if the file has already been processed by comparing the current hash with the stored hash.
+4. If the file hasn't changed, it's skipped, saving processing time.
+
+### Database Location
+
+The SQLite database is stored in the following locations, depending on your operating system:
+
+- **Linux**: `~/.local/share/subscleaner/subscleaner/subscleaner.db`
+- **macOS**: `~/Library/Application Support/subscleaner/subscleaner/subscleaner.db`
+- **Windows**: `C:\Users\<username>\AppData\Local\subscleaner\subscleaner\subscleaner.db`
+
+### Command Line Options
+
+Two new command line options have been added:
+
+- `--debug`: Stores the database in the current directory instead of the default location
+- `--force`: Processes all files regardless of whether they've been processed before
+
+Example usage:
+```sh
+find /your/media/location -name "*.srt" | subscleaner --force
+```
+
+This feature makes Subscleaner more efficient, especially when running regularly via cron jobs or other scheduled tasks, as it will only process new or modified subtitle files.
