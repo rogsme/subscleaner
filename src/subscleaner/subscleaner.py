@@ -270,7 +270,7 @@ def remove_ad_lines(subtitle_data: pysrt.SubRipFile) -> bool:
     return modified
 
 
-def is_already_processed(subtitle_file, db_path, file_hash, force=False):
+def is_already_processed(subtitle_file, db_path, file_hash, force=False, verbose=False):
     """
     Check if the subtitle file has already been processed.
 
@@ -290,13 +290,14 @@ def is_already_processed(subtitle_file, db_path, file_hash, force=False):
 
     # Check if the file is in the database with the same hash
     if is_file_processed(db_path, str(subtitle_file), file_hash):
-        print(f"Already processed {subtitle_file} (hash match)")
+        if verbose:
+            print(f"Already processed {subtitle_file} (hash match)")
         return True
 
     return False
 
 
-def process_subtitle_file(subtitle_file_path: str, db_path, force=False) -> bool:
+def process_subtitle_file(subtitle_file_path: str, db_path, force=False, verbose=False) -> bool:
     """
     Process a subtitle file to remove ad lines.
 
@@ -304,13 +305,15 @@ def process_subtitle_file(subtitle_file_path: str, db_path, force=False) -> bool
         subtitle_file_path (str): The path to the subtitle file.
         db_path (pathlib.Path): The path to the database file.
         force (bool): If True, process the file even if it has been processed before.
+        verbose (bool): If True, print detailed processing information.
 
     Returns:
         bool: True if the subtitle file was modified, False otherwise.
     """
     try:
         subtitle_file = pathlib.Path(subtitle_file_path)
-        print(f"Analyzing: {subtitle_file}")
+        if verbose:
+            print(f"Analyzing: {subtitle_file}")
 
         # Early validation checks
         if not subtitle_file.exists():
@@ -359,7 +362,7 @@ def process_subtitle_file(subtitle_file_path: str, db_path, force=False) -> bool
         return False
 
 
-def process_subtitle_files(subtitle_files: list[str], db_path, force=False) -> list[str]:
+def process_subtitle_files(subtitle_files: list[str], db_path, force=False, verbose=False) -> list[str]:
     """
     Process multiple subtitle files to remove ad lines.
 
@@ -367,25 +370,20 @@ def process_subtitle_files(subtitle_files: list[str], db_path, force=False) -> l
         subtitle_files (list[str]): A list of subtitle file paths.
         db_path (pathlib.Path): The path to the database file.
         force (bool): If True, process files even if they have been processed before.
+        verbose (bool): If True, print detailed processing information.
 
     Returns:
         list[str]: A list of modified subtitle file paths.
     """
     modified_files = []
     for subtitle_file in subtitle_files:
-        if process_subtitle_file(subtitle_file, db_path, force):
+        if process_subtitle_file(subtitle_file, db_path, force, verbose):
             modified_files.append(subtitle_file)
     return modified_files
 
 
-def main():
-    """
-    Process subtitle files to remove ad lines.
-
-    Read subtitle file paths from standard input, process each file to remove ad lines,
-    and print the result. Keep track of the modified files and print
-    a summary at the end.
-    """
+def _parse_args():
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Remove advertisements from subtitle files.")
     parser.add_argument(
         "--db-location",
@@ -396,19 +394,59 @@ def main():
     parser.add_argument("--version", action="store_true", help="Show version information and exit")
     parser.add_argument("--reset-db", action="store_true", help="Reset the database (remove all stored file hashes)")
     parser.add_argument("--list-patterns", action="store_true", help="List all advertisement patterns being used")
-    args = parser.parse_args()
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Increase output verbosity (show analyzing/skipping messages)",
+    )
+    return parser.parse_args()
+
+
+def _print_version():
+    """Print the application version."""
+    try:
+        from subscleaner import __version__
+
+        print(f"Subscleaner version {__version__}")
+    except ImportError:
+        import importlib.metadata
+
+        version = importlib.metadata.version("subscleaner")
+        print(f"Subscleaner version {version}")
+
+
+def _reset_database(db_path):
+    """Reset the database file."""
+    if db_path.exists():
+        try:
+            db_path.unlink()
+            print(f"Database reset successfully: {db_path}")
+        except Exception as e:
+            print(f"Error resetting database: {e}")
+    else:
+        print(f"No database found at {db_path}")
+
+
+def _list_patterns():
+    """List the configured ad patterns."""
+    print("Advertisement patterns being used:")
+    for i, pattern in enumerate(AD_PATTERNS, 1):
+        print(f"{i}. {pattern.pattern}")
+
+
+def main():
+    """
+    Run the main entry point for the Subscleaner script.
+
+    Parse arguments, handle special commands like version or reset-db,
+    and processes subtitle files provided via stdin.
+    """
+    args = _parse_args()
 
     # Handle version request
     if args.version:
-        try:
-            from subscleaner import __version__
-
-            print(f"Subscleaner version {__version__}")
-        except ImportError:
-            import importlib.metadata
-
-            version = importlib.metadata.version("subscleaner")
-            print(f"Subscleaner version {version}")
+        _print_version()
         return
 
     # Get database path
@@ -416,24 +454,15 @@ def main():
 
     # Handle reset database request
     if args.reset_db:
-        if db_path.exists():
-            try:
-                db_path.unlink()
-                print(f"Database reset successfully: {db_path}")
-            except Exception as e:
-                print(f"Error resetting database: {e}")
-        else:
-            print(f"No database found at {db_path}")
+        _reset_database(db_path)
         return
 
     # Handle list patterns request
     if args.list_patterns:
-        print("Advertisement patterns being used:")
-        for i, pattern in enumerate(AD_PATTERNS, 1):
-            print(f"{i}. {pattern.pattern}")
+        _list_patterns()
         return
 
-    # Initialize database
+    # Initialize database if not resetting
     init_db(db_path)
 
     # Process subtitle files
@@ -442,8 +471,9 @@ def main():
         print("No subtitle files provided. Pipe filenames to subscleaner or use --help for more information.")
         return
 
-    print("Starting script")
-    modified_files = process_subtitle_files(subtitle_files, db_path, args.force)
+    if args.verbose:
+        print("Starting script")
+    modified_files = process_subtitle_files(subtitle_files, db_path, args.force, args.verbose)
     if modified_files:
         print(f"Modified {len(modified_files)} files")
     print("Done")

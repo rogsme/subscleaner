@@ -191,8 +191,8 @@ def test_process_subtitle_files(tmpdir, sample_srt_content, mock_db_path):
         assert modified_subtitle_files == [subtitle_file1]
         assert mock_process.call_count == 2  # noqa PLR2004
         # Check that db_path was passed to process_subtitle_file
-        mock_process.assert_any_call(subtitle_file1, mock_db_path, False)
-        mock_process.assert_any_call(subtitle_file2, mock_db_path, False)
+        mock_process.assert_any_call(subtitle_file1, mock_db_path, False, False)
+        mock_process.assert_any_call(subtitle_file2, mock_db_path, False, False)
 
 
 def test_main_no_modification(tmpdir, sample_srt_content):
@@ -213,7 +213,7 @@ def test_main_no_modification(tmpdir, sample_srt_content):
         patch("src.subscleaner.subscleaner.process_subtitle_files", return_value=[]) as mock_process_subtitle_files,
     ):
         main()
-        mock_process_subtitle_files.assert_called_once_with([subtitle_file], Path("/tmp/test_db.db"), False)
+        mock_process_subtitle_files.assert_called_once_with([subtitle_file], Path("/tmp/test_db.db"), False, False)
 
 
 def test_main_with_modification(tmpdir, sample_srt_content):
@@ -237,7 +237,7 @@ def test_main_with_modification(tmpdir, sample_srt_content):
         ) as mock_process_subtitle_files,
     ):
         main()
-        mock_process_subtitle_files.assert_called_once_with([subtitle_file], Path("/tmp/test_db.db"), False)
+        mock_process_subtitle_files.assert_called_once_with([subtitle_file], Path("/tmp/test_db.db"), False, False)
 
 
 def test_process_files_with_special_chars(special_chars_temp_dir, sample_srt_content, mock_db_path):
@@ -366,4 +366,4 @@ def test_main_with_special_chars(special_chars_temp_dir, sample_srt_content):
         ) as mock_process_subtitle_files,
     ):
         main()
-        mock_process_subtitle_files.assert_called_once_with([str(file_path)], Path("/tmp/test_db.db"), False)
+        mock_process_subtitle_files.assert_called_once_with([str(file_path)], Path("/tmp/test_db.db"), False, False)
