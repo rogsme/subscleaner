@@ -90,6 +90,18 @@ docker run -e CRON="0 0 * * *" -v /your/media/location:/files -v /etc/localtime:
 
 The Docker container will run the Subscleaner script according to the specified cron schedule and process the subtitle files in the mounted media directory.
 
+#### Database Persistence in Docker
+
+By default, the Docker container uses an internal database that will be lost when the container is removed. To maintain a persistent database across container restarts, you should mount a volume for the database:
+
+``` sh
+docker run -e CRON="0 0 * * *" \
+  -v /your/media/location:/files \
+  -v /path/for/database:/data \
+  -v /etc/localtime:/etc/localtime:ro \
+  rogsme/subscleaner
+```
+
 #### If you are using YAMS
 
 YAMS is a highly opinionated media server. You can know more about it here: https://yams.media/
@@ -103,8 +115,11 @@ Add this container to your `docker-compose.custom.yaml`:
       - CRON=0 0 * * *
     volumes:
       - ${MEDIA_DIRECTORY}:/files
+      - ./subscleaner-data:/data
       - /etc/localtime:/etc/localtime:ro
 ```
+
+This ensures that the database is preserved between container restarts, preventing unnecessary reprocessing of subtitle files.
 
 To get more information on how to add your own containers in YAMS: https://yams.media/advanced/add-your-own-containers/
 
@@ -143,14 +158,18 @@ The SQLite database is stored in the following locations, depending on your oper
 
 ### Command Line Options
 
-Two new command line options have been added:
+Several command line options are available:
 
-- `--debug`: Stores the database in the current directory instead of the default location
+- `--db-location`: Specify a custom location for the database file
 - `--force`: Processes all files regardless of whether they've been processed before
+- `--reset-db`: Reset the database (remove all stored file hashes)
+- `--list-patterns`: List all advertisement patterns being used
+- `--version`: Show version information and exit
 
 Example usage:
 ```sh
 find /your/media/location -name "*.srt" | subscleaner --force
+find /your/media/location -name "*.srt" | subscleaner --db-location /path/to/custom/database.db
 ```
 
 This feature makes Subscleaner more efficient, especially when running regularly via cron jobs or other scheduled tasks, as it will only process new or modified subtitle files.

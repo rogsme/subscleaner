@@ -9,7 +9,9 @@ RUN apk add --no-cache curl \
  && mv supercronic-linux-amd64 /usr/local/bin/supercronic \
  && apk del curl
 
+RUN mkdir -p /data
+
 RUN pip install --no-cache-dir subscleaner
 
-CMD echo "${CRON:-0 0 * * *} find /files -name \"*.srt\" | $(which subscleaner)" > /crontab && \
+CMD echo "${CRON:-0 0 * * *} find /files -name \"*.srt\" | $(which subscleaner) --db-location /data/subscleaner.db" > /crontab && \
     /usr/local/bin/supercronic /crontab

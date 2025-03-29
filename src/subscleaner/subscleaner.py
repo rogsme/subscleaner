@@ -102,18 +102,20 @@ AD_PATTERNS = [
 ]
 
 
-def get_db_path(debug=False):
+def get_db_path(db_location=None):
     """
     Get the path to the SQLite database.
 
     Args:
-        debug (bool): If True, use the current directory for the database.
+        db_location (str, optional): Custom path for the database file.
 
     Returns:
         pathlib.Path: The path to the database file.
     """
-    if debug:
-        return pathlib.Path.cwd() / "subscleaner.db"
+    if db_location:
+        db_path = pathlib.Path(db_location)
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        return db_path
 
     app_data_dir = pathlib.Path(user_data_dir("subscleaner", "subscleaner"))
     app_data_dir.mkdir(parents=True, exist_ok=True)
@@ -416,7 +418,11 @@ def main():
     a summary at the end.
     """
     parser = argparse.ArgumentParser(description="Remove advertisements from subtitle files.")
-    parser.add_argument("--debug", action="store_true", help="Use current directory for database")
+    parser.add_argument(
+        "--db-location",
+        type=str,
+        help="Specify a custom location for the database file",
+    )
     parser.add_argument("--force", action="store_true", help="Process files even if they have been processed before")
     parser.add_argument("--version", action="store_true", help="Show version information and exit")
     parser.add_argument("--reset-db", action="store_true", help="Reset the database (remove all stored file hashes)")
@@ -437,7 +443,7 @@ def main():
         return
 
     # Get database path
-    db_path = get_db_path(args.debug)
+    db_path = get_db_path(args.db_location)
 
     # Handle reset database request
     if args.reset_db:
