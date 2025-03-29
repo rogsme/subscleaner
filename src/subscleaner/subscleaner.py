@@ -20,12 +20,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
 import hashlib
-import os
 import pathlib
 import re
 import sqlite3
 import sys
-import time
 
 import chardet
 import pysrt
@@ -229,27 +227,6 @@ def contains_ad(subtitle_line: str) -> bool:
     return any(pattern.search(subtitle_line) for pattern in AD_PATTERNS)
 
 
-def is_processed_before(subtitle_file: pathlib.Path) -> bool:
-    """
-    Check if the subtitle file has already been processed.
-
-    Args:
-        subtitle_file (pathlib.Path): The path to the subtitle file.
-
-    Returns:
-        bool: True if the subtitle file has already been processed, False otherwise.
-    """
-    try:
-        file_creation_time = os.path.getctime(subtitle_file)
-        processed_timestamp = time.mktime(
-            time.strptime("2021-05-13 00:00:00", "%Y-%m-%d %H:%M:%S"),
-        )
-        return file_creation_time < processed_timestamp
-    except Exception as e:
-        print(f"Error checking if file was processed before: {e}")
-        return False
-
-
 def get_encoding(subtitle_file: pathlib.Path) -> str:
     """
     Detect the encoding of the subtitle file.
@@ -297,8 +274,7 @@ def is_already_processed(subtitle_file, db_path, file_hash, force=False):
     """
     Check if the subtitle file has already been processed.
 
-    This function checks both the database and the timestamp to determine
-    if a file has already been processed.
+    This function checks the database to determine if a file has already been processed.
 
     Args:
         subtitle_file (pathlib.Path): The path to the subtitle file.
@@ -315,13 +291,6 @@ def is_already_processed(subtitle_file, db_path, file_hash, force=False):
     # Check if the file is in the database with the same hash
     if is_file_processed(db_path, str(subtitle_file), file_hash):
         print(f"Already processed {subtitle_file} (hash match)")
-        return True
-
-    # Check based on timestamp
-    if is_processed_before(subtitle_file):
-        print(f"Already processed {subtitle_file} (timestamp check)")
-        # Still mark it in the database
-        mark_file_processed(db_path, str(subtitle_file), file_hash)
         return True
 
     return False

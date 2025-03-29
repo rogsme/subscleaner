@@ -11,7 +11,6 @@ import pytest
 from src.subscleaner.subscleaner import (
     contains_ad,
     get_encoding,
-    is_processed_before,
     main,
     process_subtitle_file,
     process_subtitle_files,
@@ -99,23 +98,6 @@ def test_contains_ad(subtitle_line, expected_result):
     assert contains_ad(subtitle_line) is expected_result
 
 
-def test_is_processed_before(tmpdir):
-    """
-    Test the is_processed_before function.
-
-    Args:
-        tmpdir (pytest.fixture): A temporary directory for creating the sample SRT file.
-    """
-    subtitle_file = create_sample_srt_file(tmpdir, "")
-    subtitle_path = Path(subtitle_file)
-
-    with patch("os.path.getctime", return_value=0):
-        assert is_processed_before(subtitle_path) is True
-
-    with patch("os.path.getctime", return_value=9999999999):
-        assert is_processed_before(subtitle_path) is False
-
-
 def test_get_encoding(tmpdir, sample_srt_content):
     """
     Test the get_encoding function.
@@ -157,7 +139,6 @@ def test_process_subtitle_file_no_modification(tmpdir, sample_srt_content, mock_
     """
     subtitle_file = create_sample_srt_file(tmpdir, sample_srt_content)
     with (
-        patch("src.subscleaner.subscleaner.is_processed_before", return_value=True),
         patch("src.subscleaner.subscleaner.is_file_processed", return_value=True),
     ):
         assert process_subtitle_file(subtitle_file, mock_db_path) is False
@@ -174,7 +155,6 @@ def test_process_subtitle_file_with_modification(tmpdir, sample_srt_content, moc
     """
     subtitle_file = create_sample_srt_file(tmpdir, sample_srt_content)
     with (
-        patch("src.subscleaner.subscleaner.is_processed_before", return_value=False),
         patch("src.subscleaner.subscleaner.is_file_processed", return_value=False),
         patch("src.subscleaner.subscleaner.get_file_hash", return_value="mockhash"),
         patch("src.subscleaner.subscleaner.mark_file_processed"),
@@ -272,7 +252,6 @@ def test_process_files_with_special_chars(special_chars_temp_dir, sample_srt_con
     special_files = create_special_char_files(special_chars_temp_dir, sample_srt_content)
 
     with (
-        patch("src.subscleaner.subscleaner.is_processed_before", return_value=False),
         patch("src.subscleaner.subscleaner.is_file_processed", return_value=False),
         patch("src.subscleaner.subscleaner.get_file_hash", return_value="mockhash"),
         patch("src.subscleaner.subscleaner.mark_file_processed"),
@@ -305,27 +284,6 @@ def test_get_encoding_with_special_chars(special_chars_temp_dir, sample_srt_cont
         pytest.fail(f"get_encoding raised {e} with non-existent file")
 
 
-def test_is_processed_before_with_special_chars(special_chars_temp_dir):
-    """
-    Test is_processed_before function with special character filenames.
-
-    Args:
-        special_chars_temp_dir: Temporary directory for special character files
-    """
-    file_path = special_chars_temp_dir / "check_processed_ümlaut.srt"
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write("Test content")
-
-    with patch("os.path.getctime", return_value=0):
-        assert is_processed_before(file_path) is True
-
-    with patch("os.path.getctime", return_value=9999999999):
-        assert is_processed_before(file_path) is False
-
-    non_existent_file = special_chars_temp_dir / "non_existent_ümlaut.srt"
-    assert is_processed_before(non_existent_file) is False
-
-
 def test_process_subtitle_file_with_special_chars(special_chars_temp_dir, sample_srt_content, mock_db_path):
     """
     Test process_subtitle_file function with special character filenames.
@@ -340,7 +298,6 @@ def test_process_subtitle_file_with_special_chars(special_chars_temp_dir, sample
         f.write(sample_srt_content)
 
     with (
-        patch("src.subscleaner.subscleaner.is_processed_before", return_value=False),
         patch("src.subscleaner.subscleaner.is_file_processed", return_value=False),
         patch("src.subscleaner.subscleaner.get_file_hash", return_value="mockhash"),
         patch("src.subscleaner.subscleaner.mark_file_processed"),
@@ -367,7 +324,6 @@ def test_file_saving_with_special_chars(special_chars_temp_dir, sample_srt_conte
     special_files = create_special_char_files(special_chars_temp_dir, sample_srt_content)
 
     with (
-        patch("src.subscleaner.subscleaner.is_processed_before", return_value=False),
         patch("src.subscleaner.subscleaner.is_file_processed", return_value=False),
         patch("src.subscleaner.subscleaner.get_file_hash", return_value="mockhash"),
         patch("src.subscleaner.subscleaner.mark_file_processed"),
