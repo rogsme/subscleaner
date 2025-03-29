@@ -152,8 +152,8 @@ Subscleaner now uses a SQLite database to track processed files, which significa
 
 The SQLite database is stored in the following locations, depending on your operating system:
 
-- **Linux**: `~/.local/share/subscleaner/subscleaner/subscleaner.db`
-- **macOS**: `~/Library/Application Support/subscleaner/subscleaner/subscleaner.db`
+- **Linux**: `~/.local/share/subscleaner/subscleaner.db`
+- **macOS**: `~/Library/Application Support/subscleaner/subscleaner.db`
 - **Windows**: `C:\Users\<username>\AppData\Local\subscleaner\subscleaner\subscleaner.db`
 
 ### Command Line Options
