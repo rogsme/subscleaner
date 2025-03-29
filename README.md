@@ -165,11 +165,13 @@ Several command line options are available:
 - `--reset-db`: Reset the database (remove all stored file hashes)
 - `--list-patterns`: List all advertisement patterns being used
 - `--version`: Show version information and exit
+- `-v`, `--verbose`: Increase output verbosity (show analyzing/skipping messages)
 
 Example usage:
 ```sh
 find /your/media/location -name "*.srt" | subscleaner --force
 find /your/media/location -name "*.srt" | subscleaner --db-location /path/to/custom/database.db
+find /your/media/location -name "*.srt" | subscleaner --verbose
 ```
 
 This feature makes Subscleaner more efficient, especially when running regularly via cron jobs or other scheduled tasks, as it will only process new or modified subtitle files.
