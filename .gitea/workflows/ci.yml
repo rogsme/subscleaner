@@ -78,7 +78,7 @@ jobs:
         run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Log in to Gitea Registry
-        run: echo "${{ vars.REPOSITORY_TOKEN }}" | docker login git.rogs.me -u rogs --password-stdin
+        run: echo "${{ secrets.REPOSITORY_TOKEN }}" | docker login git.rogs.me -u rogs --password-stdin
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
