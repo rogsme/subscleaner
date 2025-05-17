@@ -62,8 +62,8 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
           uv venv .venv
-          uv pip install --system build twine
           source .venv/bin/activate
+          uv pip install --system build twine
           uv run python -m build
           uv run python -m twine upload dist/*
 
