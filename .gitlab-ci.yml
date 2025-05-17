@@ -18,50 +18,12 @@ lint:
 test:
   stage: test
   script:
-    - uv run pytest -v --cov=. --cov-report=xml
-  after_script:
-    - bash <(curl -s https://codecov.io/bash)
+    - uv run pytest
   artifacts:
     reports:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
-
-deploy_to_pypi:
-  stage: deploy
-  only:
-    refs:
-      - master
-    changes:
-      - pyproject.toml
-  except:
-    - tags
-  script:
-    - uv add build twine
-    - uv run python -m build
-    - TWINE_USERNAME=__token__ TWINE_PASSWORD=$PYPI_PASSWORD uv run python -m twine upload dist/*
-
-deploy_to_dockerhub:
-  stage: deploy
-  needs:
-    - job: deploy_to_pypi
-      optional: true
-  only:
-    refs:
-      - master
-    changes:
-      - pyproject.toml
-      - Dockerfile
-  except:
-    - tags
-  image: docker:latest
-  services:
-    - docker:dind
-  before_script:
-    - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
-    - docker buildx create --use
-  script:
-    - docker buildx build --push --tag rogsme/subscleaner:latest .
 
 deploy_to_gitlab:
   stage: deploy
