@@ -1,6 +1,6 @@
 [project]
 name = "subscleaner"
-version = "2.1.4"
+version = "2.1.5"
 description = "Remove advertisements from subtitle files"
 authors = [
     {name = "Roger Gonzalez", email = "roger@rogs.me"}
