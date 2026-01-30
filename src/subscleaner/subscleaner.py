@@ -98,6 +98,7 @@ AD_PATTERNS = [
     re.compile(r"\bmenoyos\b", re.IGNORECASE),
     re.compile(r"\bYTS.MX\b", re.IGNORECASE),
     re.compile(r"\bYTS.LT\b", re.IGNORECASE),
+    re.compile(r"\bYTS.BZ\b", re.IGNORECASE),
 ]
 
 
